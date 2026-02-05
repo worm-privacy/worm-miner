@@ -11,6 +11,12 @@ First you need rust toolchain:
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
+In the second step you need to install the nlohmann-json3-dev libgmp3-dev nasm packages:
+```
+sudo apt-get update
+sudo apt-get install nlohmann-json3-dev libgmp3-dev nasm
+```
+
 ### Compile CLI:
 ```
 cargo build --bin cli
