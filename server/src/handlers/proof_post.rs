@@ -22,6 +22,12 @@ pub async fn proof_post(
     State(state): State<Arc<RwLock<AppState>>>,
     Json(body): Json<ProofPostRequest>,
 ) -> Result<ProofPostResponse, ServerError> {
+    if body.network == Network::Sepolia {
+        return Err(ServerError::InvalidAction(
+            "sepolia network is not supported",
+        ));
+    }
+
     let provider = get_provider(body.network)?;
 
     let mut state = state.write().await;
