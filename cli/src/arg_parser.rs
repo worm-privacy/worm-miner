@@ -33,9 +33,9 @@ pub enum Commands {
         #[arg(long, value_parser = eth_amount_parser, default_value_t = { U256::from(0) })]
         broadcaster_fee: U256,
 
-        // Amount of tokens you want to swap on uniswap
+        // Amount of tokens you want to swap for ETH
         #[arg(long, value_parser = eth_amount_parser, default_value_t = { U256::from(0) })]
-        sell_on_uniswap: U256,
+        sell_for_eth: U256,
 
         /// User will get BETH on this address 0x...
         #[arg(long, value_parser = eth_address_parser)]

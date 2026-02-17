@@ -29,14 +29,14 @@ pub async fn burn(
     amount: U256,
     reveal: U256,
     broadcaster_fee: U256,
-    sell_on_uniswap: U256,
+    sell_for_eth: U256,
     receiver_address: Address,
     prover_fee: U256,
 ) -> Result<(BurnOutput, Address), BurnError> {
-    let receiver_hook = if sell_on_uniswap == 0 {
+    let receiver_hook = if sell_for_eth == 0 {
         Bytes::new()
     } else {
-        BETHToETHContract::create_swap_hook(network, sell_on_uniswap, receiver_address)?
+        BETHToETHContract::create_swap_hook(network, sell_for_eth, receiver_address)?
     };
 
     let extra_commitment = ExtraCommitment::new(

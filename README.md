@@ -29,14 +29,14 @@ Note: If you want to deploy with **Docker**, check out [this](https://github.com
 
 ## Burn
 
-`worm-miner burn --network sepolia/anvil/mainnet --private-key 0x --amount 1.0 --reveal 0.5 --broadcaster-fee 0.1 --sell-on-uniswap 0.1 --receiver-address 0x.. --prover-fee 0.01`
+`worm-miner burn --network sepolia/anvil/mainnet --private-key 0x --amount 1.0 --reveal 0.5 --broadcaster-fee 0.1 --sell-for-eth 0.1 --receiver-address 0x.. --prover-fee 0.01`
 
 - `--network`: Optional (Default: `mainnet`)
 - `--private-key`: Required (the private key of the account performing the burn)
 - `--amount`: Required (The amount we want to send to the burn-address)
 - `--reveal`: Optional (Default: maximum, same as `--amount`) (You can partially reveal the burned amount as BETH and encrypt the rest in a note file)
 - `--broadcaster-fee`: Optional (Default: 0)
-- `--sell-on-uniswap`: Optional (Default: 0) Part of the reveal amount can be sold in exchange of ETH
+- `--sell-for-eth`: Optional (Default: 0) Part of the reveal amount can be sold in exchange of ETH
 - `--receiver_address`: Required (Address) user will get BETH on this address
 - `--prover-fee`: Default is `0` in case you want to prove it yourself
 
