@@ -62,8 +62,8 @@ impl BETHContract {
             proverFee: prover_fee,
             prover,
             receiverPostMintHook: swap_calldata,
-            broadcasterFeePostMintHook: Bytes::new(),
-            proverFeePostMintHook: Bytes::new(),
+            broadcasterFeePostMintHook: Bytes::new(), // TODO
+            proverFeePostMintHook: Bytes::new(),      // TODO
         };
         let receipt = self
             .instance
