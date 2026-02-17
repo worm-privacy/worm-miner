@@ -55,7 +55,6 @@ impl Network {
         }
     }
 
-    //TODO
     pub fn beth_address(&self) -> Result<Address, anyhow::Error> {
         let address_str = match self {
             Network::Anvil => {
@@ -98,7 +97,6 @@ impl Network {
         })
     }
 
-    // TODO
     pub fn beth_to_eth_address(&self) -> Result<Address, anyhow::Error> {
         let address_str = match self {
             Network::Anvil => env::var("ANVIL_BETH_TO_ETH_ADDRESS")

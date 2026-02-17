@@ -18,7 +18,7 @@ use crate::{
         error::BurnError,
         extra_commitment::ExtraCommitment,
     },
-    contracts::network::Network,
+    contracts::{beth_to_eth::BETHToETHContract, network::Network},
     utils::{ToU256, TryToFr},
 };
 use anyhow::anyhow;
@@ -36,7 +36,7 @@ pub async fn burn(
     let receiver_hook = if sell_on_uniswap == 0 {
         Bytes::new()
     } else {
-        Bytes::new() // TODO make calldata with uniswap interface
+        BETHToETHContract::create_swap_hook(network, sell_on_uniswap, receiver_address)?
     };
 
     let extra_commitment = ExtraCommitment::new(
@@ -83,6 +83,7 @@ pub async fn burn(
             amount,
             reveal,
             extra_commitment,
+            receiver_hook,
         ),
         burn_address,
     ))
