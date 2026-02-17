@@ -44,7 +44,9 @@ impl BETHContract {
         receiver: Address,
         prover_fee: U256,
         prover: Address,
-        swap_calldata: Bytes,
+        receiver_post_mint_hook: Bytes,
+        broadcaster_fee_post_mint_hook: Bytes,
+        prover_fee_post_mint_hook: Bytes,
     ) -> Result<TransactionReceipt, anyhow::Error> {
         let params = MintParams {
             pA: [proof.proof.pi_a[0], proof.proof.pi_a[1]],
@@ -61,9 +63,9 @@ impl BETHContract {
             revealedAmountReceiver: receiver,
             proverFee: prover_fee,
             prover,
-            receiverPostMintHook: swap_calldata,
-            broadcasterFeePostMintHook: Bytes::new(), // TODO
-            proverFeePostMintHook: Bytes::new(),      // TODO
+            receiverPostMintHook: receiver_post_mint_hook,
+            broadcasterFeePostMintHook: broadcaster_fee_post_mint_hook,
+            proverFeePostMintHook: prover_fee_post_mint_hook,
         };
         let receipt = self
             .instance
