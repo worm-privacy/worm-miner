@@ -10,6 +10,7 @@ use alloy::{
     signers::local::PrivateKeySigner,
     sol,
 };
+use anyhow::anyhow;
 
 sol!(
     #[allow(missing_docs)]
@@ -67,13 +68,13 @@ impl BETHContract {
             broadcasterFeePostMintHook: broadcaster_fee_post_mint_hook,
             proverFeePostMintHook: prover_fee_post_mint_hook,
         };
-        let receipt = self
-            .instance
-            .mintCoin(params)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
+
+        let trx = self.instance.mintCoin(params).send().await?;
+        let receipt = trx.get_receipt().await?;
+        if !receipt.status() {
+            return Err(anyhow!("transaction mined but reverted"));
+        }
+
         Ok(receipt)
     }
 }
