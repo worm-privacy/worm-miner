@@ -109,7 +109,9 @@ pub async fn mint(
         burn_extra_commitment.receiver,
         burn_extra_commitment.prover_fee,
         prover_address,
-        Bytes::new(), // TODO
+        burn_output.receiver_hook,
+        Bytes::new(),
+        Bytes::new(),
     )
     .await?;
 

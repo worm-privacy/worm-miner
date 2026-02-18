@@ -1,5 +1,5 @@
 use crate::{burn::extra_commitment::ExtraCommitment, contracts::network::Network};
-use alloy::primitives::U256;
+use alloy::primitives::{Bytes, U256};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct BurnOutput {
@@ -15,6 +15,8 @@ pub struct BurnOutput {
 
     // Extra commitment content
     pub extra_commitment: ExtraCommitment,
+
+    pub receiver_hook: Bytes,
 }
 
 impl BurnOutput {
@@ -24,6 +26,7 @@ impl BurnOutput {
         burn_amount: U256,
         reveal_amount: U256,
         extra_commitment: ExtraCommitment,
+        receiver_hook: Bytes,
     ) -> Self {
         Self {
             network,
@@ -31,6 +34,7 @@ impl BurnOutput {
             burn_amount,
             reveal_amount,
             extra_commitment,
+            receiver_hook,
         }
     }
 

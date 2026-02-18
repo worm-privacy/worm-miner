@@ -13,7 +13,7 @@ pub async fn relay_post(
     State(state): State<Arc<RwLock<AppState>>>,
     Json(body): Json<RelayPostRequest>,
 ) -> Result<RelayPostResponse, ServerError> {
-    let (signer, prover_address, min_broadcaster_fee) = {
+    let (signer, broadcaster_address, min_broadcaster_fee) = {
         let config = state.read().await.config;
         (
             config.signer(),
@@ -26,6 +26,12 @@ pub async fn relay_post(
         return Err(ServerError::InvalidAction("broadcaster fee is too low"));
     }
 
+    // let broadcaster_call_hook = BETHToETHContract::create_swap_hook(
+    //     body.network,
+    //     body.broadcaster_fee,
+    //     broadcaster_address,
+    // )?;
+
     let beth = BETHContract::new(body.network, signer).await?;
 
     beth.mint(
@@ -37,8 +43,10 @@ pub async fn relay_post(
         body.reveal_amount,
         body.receiver,
         body.prover_fee,
-        prover_address,
+        broadcaster_address,
         body.swap_calldata,
+        Bytes::new(),
+        Bytes::new(),
     )
     .await?;
 

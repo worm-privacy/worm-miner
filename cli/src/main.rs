@@ -19,7 +19,7 @@ async fn main() {
             amount,
             reveal,
             broadcaster_fee,
-            sell_on_uniswap,
+            sell_for_eth,
             receiver_address,
             prover_fee,
             out: out_file,
@@ -31,7 +31,7 @@ async fn main() {
                 amount,
                 reveal.unwrap_or(amount),
                 broadcaster_fee,
-                sell_on_uniswap,
+                sell_for_eth,
                 receiver_address,
                 prover_fee,
             )
