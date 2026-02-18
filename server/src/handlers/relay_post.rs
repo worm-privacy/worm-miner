@@ -2,7 +2,6 @@ use crate::data::Proof;
 use crate::{data::AppState, error::ServerError};
 use alloy::primitives::{Address, Bytes, U256};
 use axum::{Json, extract::State, response::IntoResponse};
-use common::contracts::beth_to_eth::BETHToETHContract;
 use common::contracts::{beth::BETHContract, network::Network};
 use common::utils::ether_amount_serializer;
 use serde::{Deserialize, Serialize};
@@ -27,11 +26,11 @@ pub async fn relay_post(
         return Err(ServerError::InvalidAction("broadcaster fee is too low"));
     }
 
-    let broadcaster_call_hook = BETHToETHContract::create_swap_hook(
-        body.network,
-        body.broadcaster_fee,
-        broadcaster_address,
-    )?;
+    // let broadcaster_call_hook = BETHToETHContract::create_swap_hook(
+    //     body.network,
+    //     body.broadcaster_fee,
+    //     broadcaster_address,
+    // )?;
 
     let beth = BETHContract::new(body.network, signer).await?;
 
@@ -46,7 +45,7 @@ pub async fn relay_post(
         body.prover_fee,
         broadcaster_address,
         body.swap_calldata,
-        broadcaster_call_hook,
+        Bytes::new(),
         Bytes::new(),
     )
     .await?;
