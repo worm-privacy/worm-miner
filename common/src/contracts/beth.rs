@@ -72,6 +72,7 @@ impl BETHContract {
         let trx = self.instance.mintCoin(params).send().await?;
         let receipt = trx.get_receipt().await?;
         if !receipt.status() {
+            println!("receipt: {:?}", receipt);
             return Err(anyhow!("transaction mined but reverted"));
         }
 

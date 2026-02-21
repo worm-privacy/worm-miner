@@ -1,6 +1,8 @@
 use crate::data::Proof;
+use crate::error::LogIfError;
 use crate::{data::AppState, error::ServerError};
 use alloy::primitives::{Address, Bytes, U256};
+use anyhow::anyhow;
 use axum::{Json, extract::State, response::IntoResponse};
 use common::contracts::{beth::BETHContract, network::Network};
 use common::utils::ether_amount_serializer;
@@ -48,7 +50,9 @@ pub async fn relay_post(
         Bytes::new(),
         Bytes::new(),
     )
-    .await?;
+    .await
+    .map_err(|e| ServerError::Unexpected(anyhow!("{:?}", e).into_boxed_dyn_error()))
+    .log_with_context("mint()")?;
 
     Ok(RelayPostResponse {})
 }
