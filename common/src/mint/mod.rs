@@ -55,6 +55,7 @@ pub async fn mint(
     )?;
 
     let provider = ProviderBuilder::new()
+        .wallet(signer)
         .connect(burn_output.network.url())
         .await?;
 
@@ -97,7 +98,7 @@ pub async fn mint(
     let remaining_coin =
         compute_remaining_coin(burn_key, burn_output.burn_amount, burn_output.reveal_amount)?;
 
-    let beth = BETHContract::new(burn_output.network, signer).await?;
+    let beth = BETHContract::new(burn_output.network, provider)?;
 
     beth.mint(
         proof,
