@@ -2,7 +2,7 @@ pub mod config;
 
 use crate::{data::config::Config, proof_queue_service::proof_job::ProofJob};
 use alloy::{consensus::Header, primitives::U256};
-use common::mint::proof_generator::RapidsnarkOutput;
+use common::{mint::proof_generator::RapidsnarkOutput, utils::MultiNetworkProvider};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{RwLock, mpsc::UnboundedSender};
@@ -20,10 +20,15 @@ pub struct AppState {
     pub nullifier_to_job_id: HashMap<U256, usize>,
     pub current_processing_job_id: Option<usize>,
     pub next_job_id: usize,
+    pub provider: MultiNetworkProvider,
 }
 
 impl AppState {
-    pub fn new(config: Config, job_channel: UnboundedSender<ProofJob>) -> Arc<RwLock<AppState>> {
+    pub fn new(
+        config: Config,
+        job_channel: UnboundedSender<ProofJob>,
+        provider: MultiNetworkProvider,
+    ) -> Arc<RwLock<AppState>> {
         Arc::new(RwLock::new(AppState {
             config,
             header_cache: Default::default(),
@@ -32,6 +37,7 @@ impl AppState {
             current_processing_job_id: None,
             next_job_id: 0,
             nullifier_to_job_id: Default::default(),
+            provider,
         }))
     }
 }

@@ -1,13 +1,13 @@
 use crate::{
     contracts::{beth::BETH::MintParams, network::Network},
     mint::proof_generator::RapidsnarkOutput,
+    utils::GeneralProvider,
 };
 use alloy::{
     network::EthereumWallet,
     primitives::{Address, Bytes, U256},
-    providers::{ProviderBuilder, RootProvider, fillers::*},
+    providers::{RootProvider, fillers::*},
     rpc::types::TransactionReceipt,
-    signers::local::PrivateKeySigner,
     sol,
 };
 use anyhow::anyhow;
@@ -24,11 +24,7 @@ pub struct BETHContract {
 }
 
 impl BETHContract {
-    pub async fn new(network: Network, signer: PrivateKeySigner) -> Result<Self, anyhow::Error> {
-        let provider = ProviderBuilder::new()
-            .wallet(signer)
-            .connect(network.url())
-            .await?;
+    pub fn new(network: Network, provider: GeneralProvider) -> Result<Self, anyhow::Error> {
         Ok(BETHContract {
             instance: BETH::new(network.beth_address()?, provider),
         })

@@ -1,15 +1,14 @@
-use crate::contracts::network::Network;
+use crate::{contracts::network::Network, utils::GeneralProvider};
 use alloy::{
     network::EthereumWallet,
     primitives::*,
     providers::{
-        ProviderBuilder, RootProvider,
+        RootProvider,
         fillers::{
             BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller,
             WalletFiller,
         },
     },
-    signers::local::PrivateKeySigner,
     sol,
     sol_types::{SolCall, SolValue},
 };
@@ -26,11 +25,7 @@ pub struct BETHToETHContract {
 }
 
 impl BETHToETHContract {
-    pub async fn new(network: Network, signer: PrivateKeySigner) -> Result<Self, anyhow::Error> {
-        let provider = ProviderBuilder::new()
-            .wallet(signer)
-            .connect(network.url())
-            .await?;
+    pub fn new(network: Network, provider: GeneralProvider) -> Result<Self, anyhow::Error> {
         Ok(BETHToETHContract {
             instance: BETHToETH::new(network.beth_to_eth_address()?, provider),
         })

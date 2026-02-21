@@ -15,12 +15,12 @@ pub async fn relay_post(
     State(state): State<Arc<RwLock<AppState>>>,
     Json(body): Json<RelayPostRequest>,
 ) -> Result<RelayPostResponse, ServerError> {
-    let (signer, broadcaster_address, min_broadcaster_fee) = {
-        let config = state.read().await.config;
+    let (provider, broadcaster_address, min_broadcaster_fee) = {
+        let state = state.read().await;
         (
-            config.signer(),
-            config.address(),
-            config.min_broadcaster_fee,
+            state.provider.clone(),
+            state.config.address(),
+            state.config.min_broadcaster_fee,
         )
     };
 
@@ -34,7 +34,7 @@ pub async fn relay_post(
     //     broadcaster_address,
     // )?;
 
-    let beth = BETHContract::new(body.network, signer).await?;
+    let beth = BETHContract::new(body.network, provider.get_provider(body.network))?;
 
     beth.mint(
         body.proof.rapidsnark_output,

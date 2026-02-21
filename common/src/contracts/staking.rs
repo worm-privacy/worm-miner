@@ -1,11 +1,10 @@
 use alloy::{
     network::EthereumWallet,
-    providers::{ProviderBuilder, RootProvider, fillers::*},
-    signers::local::PrivateKeySigner,
+    providers::{RootProvider, fillers::*},
     sol,
 };
 
-use crate::contracts::network::Network;
+use crate::{contracts::network::Network, utils::GeneralProvider};
 
 sol!(
     #[allow(missing_docs)]
@@ -19,11 +18,7 @@ pub struct StakingContract {
 }
 
 impl StakingContract {
-    pub async fn new(network: Network, signer: PrivateKeySigner) -> Result<Self, anyhow::Error> {
-        let provider = ProviderBuilder::new()
-            .wallet(signer)
-            .connect(network.url())
-            .await?;
+    pub fn new(network: Network, provider: GeneralProvider) -> Result<Self, anyhow::Error> {
         Ok(StakingContract {
             instance: Staking::new(network.staking_address()?, provider),
         })
