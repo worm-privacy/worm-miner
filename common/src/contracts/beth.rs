@@ -7,10 +7,8 @@ use alloy::{
     network::EthereumWallet,
     primitives::{Address, Bytes, U256},
     providers::{RootProvider, fillers::*},
-    rpc::types::TransactionReceipt,
     sol,
 };
-use anyhow::anyhow;
 
 sol!(
     #[allow(missing_docs)]

@@ -15,13 +15,9 @@ pub async fn relay_post(
     State(state): State<Arc<RwLock<AppState>>>,
     Json(body): Json<RelayPostRequest>,
 ) -> Result<RelayPostResponse, ServerError> {
-    let (provider, broadcaster_address, min_broadcaster_fee) = {
+    let (provider, min_broadcaster_fee) = {
         let state = state.read().await;
-        (
-            state.provider.clone(),
-            state.config.address(),
-            state.config.min_broadcaster_fee,
-        )
+        (state.provider.clone(), state.config.min_broadcaster_fee)
     };
 
     if body.broadcaster_fee < min_broadcaster_fee {
@@ -46,7 +42,7 @@ pub async fn relay_post(
             body.reveal_amount,
             body.receiver,
             body.prover_fee,
-            broadcaster_address,
+            body.prover_address,
             body.swap_calldata,
             Bytes::new(),
             Bytes::new(),
@@ -74,6 +70,7 @@ pub struct RelayPostRequest {
     receiver: Address,
     #[serde(with = "ether_amount_serializer")]
     prover_fee: U256,
+    prover_address: Address,
 
     swap_calldata: Bytes,
 }
