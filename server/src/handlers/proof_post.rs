@@ -2,7 +2,7 @@ use crate::{
     data::AppState,
     error::{LogIfError, ServerError},
     proof_queue_service::proof_job::ProofJob,
-    utils::{get_provider, validate_account_proof},
+    utils::validate_account_proof,
 };
 use alloy::{
     eips::BlockNumberOrTag,
@@ -28,9 +28,8 @@ pub async fn proof_post(
         ));
     }
 
-    let provider = get_provider(body.network)?;
-
     let mut state = state.write().await;
+    let provider = state.provider.get_provider(body.network);
 
     if body.prover_fee < state.config.min_prover_fee {
         return Err(ServerError::InvalidAction("prover fee is too low"));
@@ -39,7 +38,9 @@ pub async fn proof_post(
     if !state.header_cache.contains_key(&body.target_block) {
         let header = provider
             .get_block_by_number(BlockNumberOrTag::Number(body.target_block))
-            .await?
+            .await
+            .map_err(|e| ServerError::Unexpected(anyhow!("{:?}", e).into_boxed_dyn_error()))
+            .log_with_context("get_block_by_number")?
             .ok_or(anyhow!("Block not found!"))?
             .header;
         state.header_cache.insert(body.target_block, header.into());

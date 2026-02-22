@@ -44,7 +44,7 @@ impl BETHContract {
         receiver_post_mint_hook: Bytes,
         broadcaster_fee_post_mint_hook: Bytes,
         prover_fee_post_mint_hook: Bytes,
-    ) -> Result<TransactionReceipt, anyhow::Error> {
+    ) -> Result<U256, anyhow::Error> {
         let params = MintParams {
             pA: [proof.proof.pi_a[0], proof.proof.pi_a[1]],
             pB: [
@@ -66,13 +66,9 @@ impl BETHContract {
         };
 
         let trx = self.instance.mintCoin(params).send().await?;
-        let receipt = trx.get_receipt().await?;
-        if !receipt.status() {
-            println!("receipt: {:?}", receipt);
-            return Err(anyhow!("transaction mined but reverted"));
-        }
-
-        Ok(receipt)
+        // we are not waiting for receipt
+        // we return trx-hash to client so client can wait for receipt
+        Ok(U256::from_be_slice(trx.tx_hash().as_slice()))
     }
 }
 

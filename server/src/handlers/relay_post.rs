@@ -36,25 +36,26 @@ pub async fn relay_post(
 
     let beth = BETHContract::new(body.network, provider.get_provider(body.network))?;
 
-    beth.mint(
-        body.proof.rapidsnark_output,
-        body.proof.target_block,
-        body.nullifier,
-        body.remaining_coin,
-        body.broadcaster_fee,
-        body.reveal_amount,
-        body.receiver,
-        body.prover_fee,
-        broadcaster_address,
-        body.swap_calldata,
-        Bytes::new(),
-        Bytes::new(),
-    )
-    .await
-    .map_err(|e| ServerError::Unexpected(anyhow!("{:?}", e).into_boxed_dyn_error()))
-    .log_with_context("mint()")?;
+    let trx_hash = beth
+        .mint(
+            body.proof.rapidsnark_output,
+            body.proof.target_block,
+            body.nullifier,
+            body.remaining_coin,
+            body.broadcaster_fee,
+            body.reveal_amount,
+            body.receiver,
+            body.prover_fee,
+            broadcaster_address,
+            body.swap_calldata,
+            Bytes::new(),
+            Bytes::new(),
+        )
+        .await
+        .map_err(|e| ServerError::Unexpected(anyhow!("{:?}", e).into_boxed_dyn_error()))
+        .log_with_context("mint()")?;
 
-    Ok(RelayPostResponse {})
+    Ok(RelayPostResponse { trx_hash })
 }
 
 #[derive(Deserialize, Debug)]
@@ -78,7 +79,9 @@ pub struct RelayPostRequest {
 }
 
 #[derive(Serialize)]
-pub struct RelayPostResponse {}
+pub struct RelayPostResponse {
+    trx_hash: U256,
+}
 
 impl IntoResponse for RelayPostResponse {
     fn into_response(self) -> axum::response::Response {
