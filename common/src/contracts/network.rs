@@ -51,7 +51,7 @@ impl Network {
         match self {
             Network::Anvil => "http://127.0.0.1:8545",
             Network::Sepolia => "https://sepolia.drpc.org",
-            Network::Mainnet => "https://mainnet.gateway.tenderly.co",
+            Network::Mainnet => "https://eth.drpc.org",
         }
     }
 
