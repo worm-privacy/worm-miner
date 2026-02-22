@@ -4,7 +4,11 @@ use crate::{data::config::Config, proof_queue_service::proof_job::ProofJob};
 use alloy::{consensus::Header, primitives::U256};
 use common::{mint::proof_generator::RapidsnarkOutput, utils::MultiNetworkProvider};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::Arc,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use tokio::sync::{RwLock, mpsc::UnboundedSender};
 
 pub struct AppState {
@@ -49,13 +53,27 @@ pub struct Proof {
     pub target_block: U256,
     #[serde(flatten)]
     pub rapidsnark_output: RapidsnarkOutput,
+    pub expiration_time: u64, // in seconds
 }
 
 impl Proof {
     pub fn new(target_block: U256, rapidsnark_output: RapidsnarkOutput) -> Self {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap() // this is safe
+            .as_secs();
         Self {
             target_block,
             rapidsnark_output,
+            expiration_time: now + (30 * 60), // half an hour from now
         }
+    }
+
+    pub fn is_expired(&self) -> bool {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap() // this is safe
+            .as_secs();
+        now > self.expiration_time
     }
 }

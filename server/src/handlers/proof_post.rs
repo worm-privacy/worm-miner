@@ -59,9 +59,18 @@ pub async fn proof_post(
     let nullifier = job.nullifier;
 
     if let Some(user_job_id) = state.nullifier_to_job_id.get(&nullifier) {
-        if state.proof_cache.contains_key(&nullifier) {
-            // Proof is already created!
-            return Ok(ProofPostResponse {});
+        if let Some(proof_result) = state.proof_cache.get(&nullifier) {
+            if let Ok(proof) = proof_result {
+                if proof.is_expired() {
+                    state.proof_cache.remove(&nullifier);
+                } else {
+                    // Proof is already created!
+                    return Ok(ProofPostResponse {});
+                }
+            } else {
+                // proof generation already called but it failed
+                return Ok(ProofPostResponse {});
+            }
         } else {
             if let Some(running_job_id) = state.current_processing_job_id {
                 if running_job_id <= *user_job_id {

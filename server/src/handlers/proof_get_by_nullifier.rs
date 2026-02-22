@@ -22,12 +22,19 @@ pub async fn proof_get_by_nullifier(
     let nullifier = U256::from_str_radix(&nullifier, 10)
         .map_err(|e| ServerError::validation("nullifier", nullifier.clone(), format!("{e}")))?;
 
-    let state = state.read().await;
+    let mut state = state.write().await;
 
     match state.proof_cache.get(&nullifier) {
-        Some(Ok(proof)) => Ok(ProofGetByNullifierResponse {
-            proof: proof.clone(),
-        }),
+        Some(Ok(proof)) => {
+            if proof.is_expired() {
+                state.proof_cache.remove(&nullifier);
+                return Err(ServerError::NotFound("proof".to_string()));
+            } else {
+                Ok(ProofGetByNullifierResponse {
+                    proof: proof.clone(),
+                })
+            }
+        }
         Some(Err(err)) => Err(ServerError::Unexpected(
             anyhow!("{err}").into_boxed_dyn_error(),
         )),
