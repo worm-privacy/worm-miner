@@ -67,26 +67,24 @@ impl Network {
             .map_err(|e| anyhow!("invalid beth contract address {}, msg: {}", address_str, e))
     }
 
-    //TODO
     pub fn worm_address(&self) -> Result<Address, anyhow::Error> {
         let address_str = match self {
             Network::Anvil => {
                 env::var("ANVIL_WORM_ADDRESS").expect("provide ANVIL_WORM_ADDRESS env variable")
             }
             Network::Sepolia => "0x0eD61b3696F0dafFaE01E7EEA22711E7860b1118".to_string(),
-            Network::Mainnet => "todo".to_string(),
+            Network::Mainnet => "0xfC9d98CdB3529F32cD7fb02d175547641e145B29".to_string(),
         };
         Address::from_str(&address_str)
             .map_err(|e| anyhow!("invalid worm contract address {}, msg: {}", address_str, e))
     }
 
-    //TODO
     pub fn staking_address(&self) -> Result<Address, anyhow::Error> {
         let address_str = match self {
             Network::Anvil => env::var("ANVIL_STAKING_ADDRESS")
                 .expect("provide ANVIL_STAKING_ADDRESS env variable"),
             Network::Sepolia => "0x0116E4bDc0282419e58Af45dB79233Fb7cF02663".to_string(),
-            Network::Mainnet => "todo".to_string(),
+            Network::Mainnet => "0x03d4702b51a98661B89dF5fcBe8C4baeF84C60B7".to_string(),
         };
         Address::from_str(&address_str).map_err(|e| {
             anyhow!(
