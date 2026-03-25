@@ -2,9 +2,11 @@ pub mod arg_parser;
 pub mod fs;
 
 use crate::arg_parser::Args;
+use alloy::{primitives::U256, providers::ProviderBuilder};
 use clap::Parser;
 use common::{
     burn::{burn, burn_output::BurnOutput},
+    contracts::worm::WormContract,
     mint::mint,
 };
 use std::{path::PathBuf, process::exit, str::FromStr};
@@ -107,11 +109,46 @@ async fn main() {
             amount: _amount,
         } => todo!(),
         arg_parser::Commands::Participate {
-            num_epochs: _,
-            amount_per_epoch: _,
-            network: _,
-        } => todo!(),
+            private_key,
+            num_epochs,
+            amount_per_epoch,
+            network,
+        } => {
+            let provider = match ProviderBuilder::new()
+                .wallet(private_key)
+                .connect(network.url())
+                .await
+            {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            let worm = match WormContract::new(network, provider) {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            match worm
+                .participate(amount_per_epoch, U256::from(num_epochs))
+                .await
+            {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            println!("Participated successfully");
+        }
         arg_parser::Commands::Claim {
+            private_key: _,
             participate_file: _,
         } => todo!(),
     };

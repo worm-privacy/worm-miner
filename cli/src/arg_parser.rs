@@ -77,6 +77,10 @@ pub enum Commands {
     /// Put BETH to epochs to get Worm later,
     /// Creates `participate.json` to use in `claim` command
     Participate {
+        /// signer
+        #[arg(long, value_parser = private_key_parser)]
+        private_key: PrivateKeySigner,
+
         /// Number of epochs you want to participate
         #[arg(long)]
         num_epochs: u64,
@@ -91,6 +95,10 @@ pub enum Commands {
 
     /// Claim Worm form finished epoch
     Claim {
+        /// signer
+        #[arg(long, value_parser = private_key_parser)]
+        private_key: PrivateKeySigner,
+
         /// participate.json file that created by Participate command
         participate_file: PathBuf,
     },
