@@ -172,8 +172,47 @@ async fn main() {
             println!("Participation data saved in: {}", &path.to_str().unwrap());
         }
         arg_parser::Commands::Claim {
-            private_key: _,
-            participate_file: _,
-        } => todo!(),
+            private_key,
+            file,
+            network,
+        } => {
+            let provider = match ProviderBuilder::new()
+                .wallet(private_key)
+                .connect(network.url())
+                .await
+            {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            let input: ParticipateOutputJson = serde_json::from_str(
+                &std::fs::read_to_string(file).expect("error while reading input file"),
+            )
+            .expect("invalid json file");
+
+            let worm = match WormContract::new(network, provider) {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            match worm
+                .claim(input.starting_epoch(), U256::from(input.number_of_epochs()))
+                .await
+            {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            println!("claimed successfully!");
+        }
     };
 }

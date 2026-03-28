@@ -44,6 +44,24 @@ impl WormContract {
         Ok(receipt)
     }
 
+    pub async fn claim(
+        &self,
+        starting_epoch: U256,
+        number_of_epochs: U256,
+    ) -> Result<TransactionReceipt, anyhow::Error> {
+        let trx = self
+            .instance
+            .claim(starting_epoch, number_of_epochs)
+            .send()
+            .await?;
+        let receipt = trx.get_receipt().await?;
+        if !receipt.status() {
+            println!("receipt: {:?}", receipt);
+            return Err(anyhow!("transaction mined but reverted"));
+        }
+        Ok(receipt)
+    }
+
     pub async fn current_epoch(&self) -> Result<U256, anyhow::Error> {
         Ok(self.instance.currentEpoch().call().await?)
     }
