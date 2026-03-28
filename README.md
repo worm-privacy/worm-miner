@@ -61,9 +61,17 @@ Minting BETH
 
 Creates a participation file: `participate_10_0.1.json`
 
+## Claim
+
+`worm-miner claim --private-key 0x1234... participate_10_0.1.json`
+
+Claim input participation.
+
+
 ## Coming Soon features:
 1. Spend
-2. Claim
+
+Note: to use anvil network you should provide `ANVIL_BETH_ADDRESS` `ANVIL_WORM_ADDRESS` and `ANVIL_STAKING_ADDRESS` env variables if needed
 
 ## Server
 
