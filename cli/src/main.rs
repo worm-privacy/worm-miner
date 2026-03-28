@@ -1,7 +1,7 @@
 pub mod arg_parser;
 pub mod fs;
 
-use crate::arg_parser::Args;
+use crate::{arg_parser::Args, fs::ParticipateOutputJson};
 use alloy::{primitives::U256, providers::ProviderBuilder};
 use clap::Parser;
 use common::{
@@ -134,6 +134,14 @@ async fn main() {
                 }
             };
 
+            let current_epoch = match worm.current_epoch().await {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
             match worm
                 .participate(amount_per_epoch, U256::from(num_epochs))
                 .await
@@ -145,7 +153,23 @@ async fn main() {
                 }
             };
 
-            println!("Participated successfully");
+            let path = PathBuf::from_str(&format!(
+                "./participate_{}_{}.json",
+                num_epochs, amount_per_epoch
+            ))
+            .expect("can't make note.json path");
+
+            // +1 is for extra safety in case current currentEpoch call happens one epoch before participate call
+            // so we don't miss last epoch reward
+            let output = ParticipateOutputJson::new(current_epoch, num_epochs + 1)
+                .to_json()
+                .expect("can't convert note to json");
+
+            println!("Participated successfully:\n{}", &output);
+
+            std::fs::write(path.clone(), output).expect("can't write note.json to file");
+
+            println!("Participation data saved in: {}", &path.to_str().unwrap());
         }
         arg_parser::Commands::Claim {
             private_key: _,

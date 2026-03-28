@@ -43,6 +43,10 @@ impl WormContract {
         }
         Ok(receipt)
     }
+
+    pub async fn current_epoch(&self) -> Result<U256, anyhow::Error> {
+        Ok(self.instance.currentEpoch().call().await?)
+    }
 }
 
 type WormContractType = Worm::WormInstance<
