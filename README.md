@@ -29,7 +29,7 @@ Note: If you want to deploy with **Docker**, check out [this](https://github.com
 
 ## Burn
 
-`worm-miner burn --network sepolia/anvil/mainnet --private-key 0x --amount 1.0 --reveal 0.5 --broadcaster-fee 0.1 --sell-for-eth 0.1 --receiver-address 0x.. --prover-fee 0.01`
+`worm-miner burn --network sepolia/anvil/mainnet --private-key 0x1234... --amount 1.0 --reveal 0.5 --broadcaster-fee 0.1 --sell-for-eth 0.1 --receiver-address 0x.. --prover-fee 0.01`
 
 - `--network`: Optional (Default: `mainnet`)
 - `--private-key`: Required (the private key of the account performing the burn)
@@ -51,10 +51,19 @@ Minting BETH
 
 - `--broadcaster`: Required (can be a HTTP endpoint `https://prover-1.worm.cx` (If we want someone else to broadcast for us, see the Relay section) or a private key `0x...` (If we want to broadcast ourself with another private key))
 
+## Participate
+
+`worm-miner participate --private-key 0x1234... --num-epochs 10 --amount-per-epoch 0.1`
+
+- `--num-epochs`: Participate in N next epochs
+- `--amount-per-epoch`: Put X BETH per epochs
+- `--network`: Optional (Default: `mainnet`)
+
+Creates a participation file: `participate_10_0.1.json`
+
 ## Coming Soon features:
 1. Spend
-2. Participate
-3. Claim
+2. Claim
 
 ## Server
 
