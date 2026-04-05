@@ -1,6 +1,8 @@
 use crate::data::Proof;
+use crate::error::LogIfError;
 use crate::{data::AppState, error::ServerError};
 use alloy::primitives::{Address, Bytes, U256};
+use anyhow::anyhow;
 use axum::{Json, extract::State, response::IntoResponse};
 use common::contracts::{beth::BETHContract, network::Network};
 use common::utils::ether_amount_serializer;
@@ -13,36 +15,43 @@ pub async fn relay_post(
     State(state): State<Arc<RwLock<AppState>>>,
     Json(body): Json<RelayPostRequest>,
 ) -> Result<RelayPostResponse, ServerError> {
-    let (signer, prover_address, min_broadcaster_fee) = {
-        let config = state.read().await.config;
-        (
-            config.signer(),
-            config.address(),
-            config.min_broadcaster_fee,
-        )
+    let (provider, min_broadcaster_fee) = {
+        let state = state.read().await;
+        (state.provider.clone(), state.config.min_broadcaster_fee)
     };
 
     if body.broadcaster_fee < min_broadcaster_fee {
         return Err(ServerError::InvalidAction("broadcaster fee is too low"));
     }
 
-    let beth = BETHContract::new(body.network, signer).await?;
+    // let broadcaster_call_hook = BETHToETHContract::create_swap_hook(
+    //     body.network,
+    //     body.broadcaster_fee,
+    //     broadcaster_address,
+    // )?;
 
-    beth.mint(
-        body.proof.rapidsnark_output,
-        body.proof.target_block,
-        body.nullifier,
-        body.remaining_coin,
-        body.broadcaster_fee,
-        body.reveal_amount,
-        body.receiver,
-        body.prover_fee,
-        prover_address,
-        body.swap_calldata,
-    )
-    .await?;
+    let beth = BETHContract::new(body.network, provider.get_provider(body.network))?;
 
-    Ok(RelayPostResponse {})
+    let trx_hash = beth
+        .mint(
+            body.proof.rapidsnark_output,
+            body.proof.target_block,
+            body.nullifier,
+            body.remaining_coin,
+            body.broadcaster_fee,
+            body.reveal_amount,
+            body.receiver,
+            body.prover_fee,
+            body.prover_address,
+            body.swap_calldata,
+            Bytes::new(),
+            Bytes::new(),
+        )
+        .await
+        .map_err(|e| ServerError::Unexpected(anyhow!("{:?}", e).into_boxed_dyn_error()))
+        .log_with_context("mint()")?;
+
+    Ok(RelayPostResponse { trx_hash })
 }
 
 #[derive(Deserialize, Debug)]
@@ -61,12 +70,15 @@ pub struct RelayPostRequest {
     receiver: Address,
     #[serde(with = "ether_amount_serializer")]
     prover_fee: U256,
+    prover_address: Address,
 
     swap_calldata: Bytes,
 }
 
 #[derive(Serialize)]
-pub struct RelayPostResponse {}
+pub struct RelayPostResponse {
+    trx_hash: U256,
+}
 
 impl IntoResponse for RelayPostResponse {
     fn into_response(self) -> axum::response::Response {

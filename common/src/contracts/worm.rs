@@ -1,11 +1,12 @@
+use crate::{contracts::network::Network, utils::GeneralProvider};
 use alloy::{
     network::EthereumWallet,
-    providers::{ProviderBuilder, RootProvider, fillers::*},
-    signers::local::PrivateKeySigner,
+    primitives::U256,
+    providers::{RootProvider, fillers::*},
+    rpc::types::TransactionReceipt,
     sol,
 };
-
-use crate::contracts::network::Network;
+use anyhow::anyhow;
 
 sol!(
     #[allow(missing_docs)]
@@ -19,14 +20,50 @@ pub struct WormContract {
 }
 
 impl WormContract {
-    pub async fn new(network: Network, signer: PrivateKeySigner) -> Result<Self, anyhow::Error> {
-        let provider = ProviderBuilder::new()
-            .wallet(signer)
-            .connect(network.url())
-            .await?;
+    pub fn new(network: Network, provider: GeneralProvider) -> Result<Self, anyhow::Error> {
         Ok(WormContract {
             instance: Worm::new(network.worm_address()?, provider),
         })
+    }
+
+    pub async fn participate(
+        &self,
+        amount_per_epoch: U256,
+        number_of_epochs: U256,
+    ) -> Result<TransactionReceipt, anyhow::Error> {
+        let trx = self
+            .instance
+            .participate(amount_per_epoch, number_of_epochs)
+            .send()
+            .await?;
+        let receipt = trx.get_receipt().await?;
+        if !receipt.status() {
+            println!("receipt: {:?}", receipt);
+            return Err(anyhow!("transaction mined but reverted"));
+        }
+        Ok(receipt)
+    }
+
+    pub async fn claim(
+        &self,
+        starting_epoch: U256,
+        number_of_epochs: U256,
+    ) -> Result<TransactionReceipt, anyhow::Error> {
+        let trx = self
+            .instance
+            .claim(starting_epoch, number_of_epochs)
+            .send()
+            .await?;
+        let receipt = trx.get_receipt().await?;
+        if !receipt.status() {
+            println!("receipt: {:?}", receipt);
+            return Err(anyhow!("transaction mined but reverted"));
+        }
+        Ok(receipt)
+    }
+
+    pub async fn current_epoch(&self) -> Result<U256, anyhow::Error> {
+        Ok(self.instance.currentEpoch().call().await?)
     }
 }
 

@@ -1,10 +1,12 @@
 pub mod arg_parser;
 pub mod fs;
 
-use crate::arg_parser::Args;
+use crate::{arg_parser::Args, fs::ParticipateOutputJson};
+use alloy::{primitives::U256, providers::ProviderBuilder};
 use clap::Parser;
 use common::{
     burn::{burn, burn_output::BurnOutput},
+    contracts::worm::WormContract,
     mint::mint,
 };
 use std::{path::PathBuf, process::exit, str::FromStr};
@@ -19,7 +21,7 @@ async fn main() {
             amount,
             reveal,
             broadcaster_fee,
-            sell_on_uniswap,
+            sell_for_eth,
             receiver_address,
             prover_fee,
             out: out_file,
@@ -31,7 +33,7 @@ async fn main() {
                 amount,
                 reveal.unwrap_or(amount),
                 broadcaster_fee,
-                sell_on_uniswap,
+                sell_for_eth,
                 receiver_address,
                 prover_fee,
             )
@@ -107,12 +109,110 @@ async fn main() {
             amount: _amount,
         } => todo!(),
         arg_parser::Commands::Participate {
-            num_epochs: _,
-            amount_per_epoch: _,
-            network: _,
-        } => todo!(),
+            private_key,
+            num_epochs,
+            amount_per_epoch,
+            network,
+        } => {
+            let provider = match ProviderBuilder::new()
+                .wallet(private_key)
+                .connect(network.url())
+                .await
+            {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            let worm = match WormContract::new(network, provider) {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            let current_epoch = match worm.current_epoch().await {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            match worm
+                .participate(amount_per_epoch, U256::from(num_epochs))
+                .await
+            {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            let path = PathBuf::from_str(&format!(
+                "./participate_{}_{}.json",
+                num_epochs, amount_per_epoch
+            ))
+            .expect("can't make note.json path");
+
+            // +1 is for extra safety in case current currentEpoch call happens one epoch before participate call
+            // so we don't miss last epoch reward
+            let output = ParticipateOutputJson::new(current_epoch, num_epochs + 1)
+                .to_json()
+                .expect("can't convert note to json");
+
+            println!("Participated successfully:\n{}", &output);
+
+            std::fs::write(path.clone(), output).expect("can't write note.json to file");
+
+            println!("Participation data saved in: {}", &path.to_str().unwrap());
+        }
         arg_parser::Commands::Claim {
-            participate_file: _,
-        } => todo!(),
+            private_key,
+            file,
+            network,
+        } => {
+            let provider = match ProviderBuilder::new()
+                .wallet(private_key)
+                .connect(network.url())
+                .await
+            {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            let input: ParticipateOutputJson = serde_json::from_str(
+                &std::fs::read_to_string(file).expect("error while reading input file"),
+            )
+            .expect("invalid json file");
+
+            let worm = match WormContract::new(network, provider) {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            match worm
+                .claim(input.starting_epoch(), U256::from(input.number_of_epochs()))
+                .await
+            {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("{e}");
+                    exit(1);
+                }
+            };
+
+            println!("claimed successfully!");
+        }
     };
 }

@@ -1,305 +1,541 @@
 [
   {
-    "type": "constructor",
     "inputs": [
       {
+        "internalType": "contract IERC20",
         "name": "_stakingToken",
-        "type": "address",
-        "internalType": "contract IERC20"
+        "type": "address"
       },
       {
+        "internalType": "contract IERC20",
         "name": "_rewardToken",
-        "type": "address",
-        "internalType": "contract IERC20"
-      }
-    ],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "claimReward",
-    "inputs": [
-      {
-        "name": "_fromEpoch",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "address"
       },
       {
-        "name": "_count",
-        "type": "uint256",
-        "internalType": "uint256"
+        "internalType": "uint256",
+        "name": "_epochDuration",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_startingTimestamp",
+        "type": "uint256"
       }
     ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "constructor"
   },
   {
-    "type": "function",
-    "name": "currentEpoch",
     "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
   },
   {
-    "type": "function",
-    "name": "depositReward",
     "inputs": [
       {
-        "name": "_amount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
       }
     ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
   },
   {
-    "type": "function",
-    "name": "epochRewards",
+    "anonymous": false,
     "inputs": [
       {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "info",
-    "inputs": [
-      {
+        "indexed": true,
+        "internalType": "address",
         "name": "user",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       },
       {
-        "name": "since",
-        "type": "uint256",
-        "internalType": "uint256"
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "stakeIndex",
+        "type": "uint256"
       },
       {
-        "name": "count",
-        "type": "uint256",
-        "internalType": "uint256"
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
+    "name": "Released",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "fromEpoch",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "count",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "totalReward",
+        "type": "uint256"
+      }
+    ],
+    "name": "RewardClaimed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "depositor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "epoch",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "RewardDeposited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "stakeIndex",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "startingEpoch",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "numEpochs",
+        "type": "uint256"
+      }
+    ],
+    "name": "Staked",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_fromEpoch",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_count",
+        "type": "uint256"
+      }
+    ],
+    "name": "claimReward",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "currentEpoch",
     "outputs": [
       {
+        "internalType": "uint256",
         "name": "",
-        "type": "tuple",
-        "internalType": "struct Staking.Info",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "depositReward",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "epochDuration",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "epochReward",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "epochTotalLocked",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "epochUserLocked",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_fromIndex",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_count",
+        "type": "uint256"
+      }
+    ],
+    "name": "getStakes",
+    "outputs": [
+      {
         "components": [
           {
-            "name": "currentEpoch",
-            "type": "uint256",
-            "internalType": "uint256"
+            "internalType": "uint256",
+            "name": "index",
+            "type": "uint256"
           },
           {
-            "name": "epochRemainingTime",
-            "type": "uint256",
-            "internalType": "uint256"
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
           },
           {
-            "name": "since",
-            "type": "uint256",
-            "internalType": "uint256"
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
           },
           {
-            "name": "userLocks",
-            "type": "uint256[]",
-            "internalType": "uint256[]"
+            "internalType": "uint256",
+            "name": "startingEpoch",
+            "type": "uint256"
           },
           {
-            "name": "totalLocks",
-            "type": "uint256[]",
-            "internalType": "uint256[]"
+            "internalType": "uint256",
+            "name": "releaseEpoch",
+            "type": "uint256"
           },
           {
-            "name": "rewards",
-            "type": "uint256[]",
-            "internalType": "uint256[]"
+            "internalType": "bool",
+            "name": "released",
+            "type": "bool"
           }
-        ]
+        ],
+        "internalType": "struct Staking.Stake[]",
+        "name": "",
+        "type": "tuple[]"
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "lock",
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      }
+    ],
+    "name": "getStakesLength",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "since",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "count",
+        "type": "uint256"
+      }
+    ],
+    "name": "info",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "currentEpoch",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "epochRemainingTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "since",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "userLocks",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "totalLocks",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "rewards",
+            "type": "uint256[]"
+          }
+        ],
+        "internalType": "struct Staking.EpochStats",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "_amount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       },
       {
+        "internalType": "uint256",
         "name": "_numEpochs",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       }
     ],
+    "name": "lock",
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_stakeIndex",
+        "type": "uint256"
+      }
+    ],
     "name": "release",
-    "inputs": [
-      {
-        "name": "_stakeId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
+    "inputs": [],
     "name": "rewardToken",
-    "inputs": [],
     "outputs": [
       {
+        "internalType": "contract IERC20",
         "name": "",
-        "type": "address",
-        "internalType": "contract IERC20"
+        "type": "address"
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "stakeInfos",
     "inputs": [
       {
+        "internalType": "address",
         "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
+    "name": "stakes",
     "outputs": [
       {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
         "name": "owner",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       },
       {
+        "internalType": "uint256",
         "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       },
       {
+        "internalType": "uint256",
         "name": "startingEpoch",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       },
       {
+        "internalType": "uint256",
         "name": "releaseEpoch",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       },
       {
+        "internalType": "bool",
         "name": "released",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    "type": "function",
+    "inputs": [],
     "name": "stakingToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
+    "name": "startingTimestamp",
     "outputs": [
       {
+        "internalType": "uint256",
         "name": "",
-        "type": "address",
-        "internalType": "contract IERC20"
+        "type": "uint256"
       }
     ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "startingTime",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "totalStakings",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "userStakings",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "error",
-    "name": "SafeERC20FailedOperation",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
+    "stateMutability": "view",
+    "type": "function"
   }
 ]

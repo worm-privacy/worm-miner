@@ -33,9 +33,9 @@ pub enum Commands {
         #[arg(long, value_parser = eth_amount_parser, default_value_t = { U256::from(0) })]
         broadcaster_fee: U256,
 
-        // Amount of tokens you want to swap on uniswap
+        // Amount of tokens you want to swap for ETH
         #[arg(long, value_parser = eth_amount_parser, default_value_t = { U256::from(0) })]
-        sell_on_uniswap: U256,
+        sell_for_eth: U256,
 
         /// User will get BETH on this address 0x...
         #[arg(long, value_parser = eth_address_parser)]
@@ -77,6 +77,10 @@ pub enum Commands {
     /// Put BETH to epochs to get Worm later,
     /// Creates `participate.json` to use in `claim` command
     Participate {
+        /// signer
+        #[arg(long, value_parser = private_key_parser)]
+        private_key: PrivateKeySigner,
+
         /// Number of epochs you want to participate
         #[arg(long)]
         num_epochs: u64,
@@ -91,8 +95,16 @@ pub enum Commands {
 
     /// Claim Worm form finished epoch
     Claim {
-        /// participate.json file that created by Participate command
-        participate_file: PathBuf,
+        /// signer
+        #[arg(long, value_parser = private_key_parser)]
+        private_key: PrivateKeySigner,
+
+        /// participate json file that created by Participate command
+        #[arg(long)]
+        file: PathBuf,
+
+        #[arg(long, default_value_t = Network::Mainnet, value_enum)]
+        network: Network,
     },
 }
 

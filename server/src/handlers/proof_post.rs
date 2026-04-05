@@ -2,7 +2,7 @@ use crate::{
     data::AppState,
     error::{LogIfError, ServerError},
     proof_queue_service::proof_job::ProofJob,
-    utils::{get_provider, validate_account_proof},
+    utils::validate_account_proof,
 };
 use alloy::{
     eips::BlockNumberOrTag,
@@ -22,9 +22,14 @@ pub async fn proof_post(
     State(state): State<Arc<RwLock<AppState>>>,
     Json(body): Json<ProofPostRequest>,
 ) -> Result<ProofPostResponse, ServerError> {
-    let provider = get_provider(body.network)?;
+    if body.network == Network::Sepolia {
+        return Err(ServerError::InvalidAction(
+            "sepolia network is not supported",
+        ));
+    }
 
     let mut state = state.write().await;
+    let provider = state.provider.get_provider(body.network);
 
     if body.prover_fee < state.config.min_prover_fee {
         return Err(ServerError::InvalidAction("prover fee is too low"));
@@ -33,7 +38,9 @@ pub async fn proof_post(
     if !state.header_cache.contains_key(&body.target_block) {
         let header = provider
             .get_block_by_number(BlockNumberOrTag::Number(body.target_block))
-            .await?
+            .await
+            .map_err(|e| ServerError::Unexpected(anyhow!("{:?}", e).into_boxed_dyn_error()))
+            .log_with_context("get_block_by_number")?
             .ok_or(anyhow!("Block not found!"))?
             .header;
         state.header_cache.insert(body.target_block, header.into());
@@ -52,9 +59,18 @@ pub async fn proof_post(
     let nullifier = job.nullifier;
 
     if let Some(user_job_id) = state.nullifier_to_job_id.get(&nullifier) {
-        if state.proof_cache.contains_key(&nullifier) {
-            // Proof is already created!
-            return Ok(ProofPostResponse {});
+        if let Some(proof_result) = state.proof_cache.get(&nullifier) {
+            if let Ok(proof) = proof_result {
+                if proof.is_expired() {
+                    state.proof_cache.remove(&nullifier);
+                } else {
+                    // Proof is already created!
+                    return Ok(ProofPostResponse {});
+                }
+            } else {
+                // proof generation already called but it failed
+                return Ok(ProofPostResponse {});
+            }
         } else {
             if let Some(running_job_id) = state.current_processing_job_id {
                 if running_job_id <= *user_job_id {

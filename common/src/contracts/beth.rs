@@ -1,13 +1,12 @@
 use crate::{
     contracts::{beth::BETH::MintParams, network::Network},
     mint::proof_generator::RapidsnarkOutput,
+    utils::GeneralProvider,
 };
 use alloy::{
     network::EthereumWallet,
     primitives::{Address, Bytes, U256},
-    providers::{ProviderBuilder, RootProvider, fillers::*},
-    rpc::types::TransactionReceipt,
-    signers::local::PrivateKeySigner,
+    providers::{RootProvider, fillers::*},
     sol,
 };
 
@@ -23,11 +22,7 @@ pub struct BETHContract {
 }
 
 impl BETHContract {
-    pub async fn new(network: Network, signer: PrivateKeySigner) -> Result<Self, anyhow::Error> {
-        let provider = ProviderBuilder::new()
-            .wallet(signer)
-            .connect(network.url())
-            .await?;
+    pub fn new(network: Network, provider: GeneralProvider) -> Result<Self, anyhow::Error> {
         Ok(BETHContract {
             instance: BETH::new(network.beth_address()?, provider),
         })
@@ -44,8 +39,10 @@ impl BETHContract {
         receiver: Address,
         prover_fee: U256,
         prover: Address,
-        swap_calldata: Bytes,
-    ) -> Result<TransactionReceipt, anyhow::Error> {
+        receiver_post_mint_hook: Bytes,
+        broadcaster_fee_post_mint_hook: Bytes,
+        prover_fee_post_mint_hook: Bytes,
+    ) -> Result<U256, anyhow::Error> {
         let params = MintParams {
             pA: [proof.proof.pi_a[0], proof.proof.pi_a[1]],
             pB: [
@@ -61,18 +58,15 @@ impl BETHContract {
             revealedAmountReceiver: receiver,
             proverFee: prover_fee,
             prover,
-            receiverPostMintHook: swap_calldata,
-            broadcasterFeePostMintHook: Bytes::new(),
-            proverFeePostMintHook: Bytes::new(),
+            receiverPostMintHook: receiver_post_mint_hook,
+            broadcasterFeePostMintHook: broadcaster_fee_post_mint_hook,
+            proverFeePostMintHook: prover_fee_post_mint_hook,
         };
-        let receipt = self
-            .instance
-            .mintCoin(params)
-            .send()
-            .await?
-            .get_receipt()
-            .await?;
-        Ok(receipt)
+
+        let trx = self.instance.mintCoin(params).send().await?;
+        // we are not waiting for receipt
+        // we return trx-hash to client so client can wait for receipt
+        Ok(U256::from_be_slice(trx.tx_hash().as_slice()))
     }
 }
 

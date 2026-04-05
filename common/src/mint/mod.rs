@@ -55,6 +55,7 @@ pub async fn mint(
     )?;
 
     let provider = ProviderBuilder::new()
+        .wallet(signer)
         .connect(burn_output.network.url())
         .await?;
 
@@ -97,21 +98,31 @@ pub async fn mint(
     let remaining_coin =
         compute_remaining_coin(burn_key, burn_output.burn_amount, burn_output.reveal_amount)?;
 
-    let beth = BETHContract::new(burn_output.network, signer).await?;
+    let beth = BETHContract::new(burn_output.network, provider.clone())?;
 
-    beth.mint(
-        proof,
-        U256::from(block_number),
-        nullifier.to_u256(),
-        remaining_coin.to_u256(),
-        burn_extra_commitment.broadcaster_fee,
-        burn_output.reveal_amount,
-        burn_extra_commitment.receiver,
-        burn_extra_commitment.prover_fee,
-        prover_address,
-        Bytes::new(), // TODO
-    )
-    .await?;
+    let trx_hash = beth
+        .mint(
+            proof,
+            U256::from(block_number),
+            nullifier.to_u256(),
+            remaining_coin.to_u256(),
+            burn_extra_commitment.broadcaster_fee,
+            burn_output.reveal_amount,
+            burn_extra_commitment.receiver,
+            burn_extra_commitment.prover_fee,
+            prover_address,
+            burn_output.receiver_hook,
+            Bytes::new(),
+            Bytes::new(),
+        )
+        .await?;
+
+    if let Err(e) = provider.get_transaction_receipt(trx_hash.into()).await {
+        return Err(MintError::Unknown(anyhow!(
+            "error while waiting for receipt of mint() call: {:?}",
+            e
+        )));
+    }
 
     Ok(NoteJson::new(
         burn_output.burn_key,

@@ -15,6 +15,7 @@ use axum::{
     Router,
     routing::{get, post},
 };
+use common::utils::MultiNetworkProvider;
 use std::{process::exit, sync::Arc};
 use tokio::sync::mpsc;
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
@@ -34,8 +35,12 @@ async fn main() {
     };
     config.print();
 
+    let provider = MultiNetworkProvider::new(config.signer())
+        .await
+        .expect("error while calling MultiNetworkProvider::new()");
+
     let (job_tx, job_rx) = mpsc::unbounded_channel::<ProofJob>();
-    let state = AppState::new(config, job_tx);
+    let state = AppState::new(config, job_tx, provider);
 
     ProofQueueService::new(job_rx, Arc::clone(&state)).start();
 
