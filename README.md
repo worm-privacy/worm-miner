@@ -68,9 +68,6 @@ Creates a participation file: `participate_10_0.1.json`
 Claim input participation.
 
 
-## Coming Soon features:
-1. Spend
-
 Note: to use anvil network you should provide `ANVIL_BETH_ADDRESS` `ANVIL_WORM_ADDRESS` and `ANVIL_STAKING_ADDRESS` env variables if needed
 
 ## Server
