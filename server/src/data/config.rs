@@ -10,6 +10,8 @@ use std::fs;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Config {
+    // prover-fee = max(min_prover_fee, (burnAmount / prover_fee_share_inv))
+    pub prover_fee_share_inv: u64,
     #[serde(with = "ether_amount_serializer")]
     pub min_prover_fee: U256,
     #[serde(with = "ether_amount_serializer")]
@@ -58,21 +60,22 @@ impl Config {
             "\n--- Loading config from `{}` ",
             worm_home::get_config().unwrap().to_str().unwrap()
         );
+        println!("prover_fee_share_inv = {} ", self.prover_fee_share_inv);
         println!(
-            "min_prover_fee      = {} ETH",
+            "min_prover_fee       = {} BETH",
             format_ether(self.min_prover_fee)
                 .trim_end_matches('0')
                 .trim_end_matches('.')
         );
         println!(
-            "min_broadcaster_fee = {} ETH",
+            "min_broadcaster_fee  = {} BETH",
             format_ether(self.min_broadcaster_fee)
                 .trim_end_matches('0')
                 .trim_end_matches('.')
         );
-        println!("private_key         = {}", self.private_key);
-        println!("address             = {}", self.address());
-        println!("port                = {}", self.port);
+        println!("private_key          = {}", self.private_key);
+        println!("address              = {}", self.address());
+        println!("port                 = {}", self.port);
         println!()
     }
 
@@ -88,6 +91,7 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            prover_fee_share_inv: 20, // 5%
             min_prover_fee: parse_ether("0.001").unwrap(),
             min_broadcaster_fee: parse_ether("0.001").unwrap(),
             port: 8080,
