@@ -10,16 +10,18 @@ use tokio::sync::RwLock;
 pub async fn proof_get(
     State(state): State<Arc<RwLock<AppState>>>,
 ) -> Result<ProofGetResponse, ServerError> {
-    let state = state.read().await;
+    let config = state.read().await.config;
 
     Ok(ProofGetResponse {
-        min_prover_fee: state.config.min_prover_fee,
-        prover_address: state.config.address(),
+        prover_fee_share_inv: config.prover_fee_share_inv,
+        min_prover_fee: config.min_prover_fee,
+        prover_address: config.address(),
     })
 }
 
 #[derive(Serialize)]
 pub struct ProofGetResponse {
+    prover_fee_share_inv: u64,
     #[serde(with = "ether_amount_serializer")]
     min_prover_fee: U256,
     prover_address: Address,

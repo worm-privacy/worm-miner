@@ -14,6 +14,7 @@ use anyhow::anyhow;
 use axum::{Json, extract::State, response::IntoResponse};
 use common::{contracts::network::Network, utils::ether_amount_serializer};
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -31,7 +32,12 @@ pub async fn proof_post(
     let mut state = state.write().await;
     let provider = state.provider.get_provider(body.network);
 
-    if body.prover_fee < state.config.min_prover_fee {
+    let min_prover_fee = max(
+        state.config.min_prover_fee,
+        body.spend / U256::from(state.config.prover_fee_share_inv),
+    );
+
+    if body.prover_fee < min_prover_fee {
         return Err(ServerError::InvalidAction("prover fee is too low"));
     }
 
